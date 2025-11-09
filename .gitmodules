@@ -1,0 +1,3 @@
+[submodule "huitre"]
+	path = huitre
+	url = git@github.com:asqel/huitre.git
