@@ -4,7 +4,16 @@
 #include <oeuf.h>
 #include "cheese.h"
 
+/*
+server args:
+	-p PORT: set the port (default 42124)
+	--path PATH: set the PWD (default ./)
+*/
+
+
 #define CLIENT_NAME_LEN 20
+
+#define PRINT_ERR(...) fprintf(stderr, __VA_ARGS__)
 
 typedef struct {
 	int fd;
@@ -20,6 +29,7 @@ typedef struct {
 	oe_hashmap_t clients;
 } server_t;
 
-void server_start(int argc, char **argv);
+int server_parse_args(int argc, char **argv, server_t *srv);
+int server_start(int argc, char **argv);
 
 #endif
