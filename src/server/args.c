@@ -17,7 +17,7 @@ static int parse_int(int *res, char *str) {
 	return *end == '\0';
 }
 
-int server_parse_args(int argc, char **argv, server_t *srv) {
+int srv_parse_args(int argc, char **argv, server_t *srv) {
 	int i = 0;
 	while (i < argc) {
 		if (!strcmp(argv[i], "-p")) {

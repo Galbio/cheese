@@ -2,6 +2,7 @@
 #define SERVER_H
 
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <oeuf.h>
 #include "cheese.h"
 
@@ -59,5 +60,10 @@ typedef struct {
 
 int srv_parse_args(int argc, char **argv, server_t *srv);
 int srv_start(int argc, char **argv);
+void srv_end(server_t *srv);
+int srv_loop(server_t *srv);
+
+void srv_free_client(char *, client_info_t *clt);
+void srv_free_room(char *, room_info_t *clt);
 
 #endif
