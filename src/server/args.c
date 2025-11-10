@@ -1,4 +1,6 @@
 #include "server.h"
+#include <limits.h>
+#include <errno.h>
 
 static int parse_int(int *res, char *str) {
 	char *end = NULL;

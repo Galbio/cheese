@@ -1,6 +1,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include <sys/socket.h>
 #include <oeuf.h>
 #include "cheese.h"
 
@@ -53,6 +54,7 @@ typedef struct {
 	int port;
 	char *path;
 	oe_hashmap_t clients;
+	oe_hashmap_t rooms;
 } server_t;
 
 int server_parse_args(int argc, char **argv, server_t *srv);
