@@ -106,4 +106,5 @@ void	init_board(char *filepath, board_t *board)
 	}
 	init_tiles(board_str, board);
 	free(board_str);
+	board->copy_board = clone_board(board);
 }

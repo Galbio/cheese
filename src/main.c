@@ -12,11 +12,11 @@ void on_sigint(int _) {
 	exit(1);
 }
 
-void	remove_piece(tile_t *target, int id)
+void	remove_piece(tile_t *target, int id, int free_pieces)
 {
 	for (int i = (id + 1); i < target->nb_piece; i++)
 		target->pieces[i - 1] = target->pieces[i];
-	if (!--target->nb_piece) {
+	if (!--target->nb_piece && free_pieces) {
 		free(target->pieces);
 		target->pieces = NULL;
 	}
@@ -28,30 +28,32 @@ void	move_piece(board_t *board, int y, int x)
 	board->selector.target_x = x;
 	tile_t	*origin_tile = &board->tiles[board->selector.origin_y][board->selector.origin_x];
 	tile_t	*target_tile = &board->tiles[board->selector.target_y][board->selector.target_x];
-	piece_t selected_piece = origin_tile->pieces[board->selector.origin_id];
+	piece_t selected_piece = origin_tile->pieces[0];//board->selector.origin_id];
 
 	for (int i = (board->selector.origin_id + 1); i < origin_tile->nb_piece; i++)
 		origin_tile->pieces[i - 1] = origin_tile->pieces[i];
-	if (!--origin_tile->nb_piece) {
+	if (!--origin_tile->nb_piece && board->copy_board) {
 		free(origin_tile->pieces);
 		origin_tile->pieces = NULL;
 	}
 	if (target_tile->nb_piece) {
-		remove_piece(target_tile, 0);
+		remove_piece(target_tile, 0, board->copy_board != NULL);
 		selected_piece.kill_count++;
 	}
 	selected_piece.move_counter++;
-	target_tile->pieces = realloc(target_tile->pieces,
-			sizeof(piece_t) * (target_tile->nb_piece + 1));
+	if (!board->copy_board) {
+		piece_t	*real_pieces = target_tile->pieces;
+		target_tile->pieces = malloc(sizeof(piece_t) *
+				(target_tile->nb_piece + 1));
+		memcpy(target_tile->pieces, real_pieces, target_tile->nb_piece * sizeof(piece_t));
+	}
+	else
+		target_tile->pieces = realloc(target_tile->pieces,
+				sizeof(piece_t) * (target_tile->nb_piece + 1));
 	if (!target_tile->pieces)
 		exit(1);
 	target_tile->pieces[target_tile->nb_piece++] = selected_piece;
 	reset_possible_moves(board);
-	if (king_in_check(board, selected_piece.color)) {
-		write(1, "A", 1);
-		while (1)
-			;
-	}
 }
 
 void	highlight_board(board_t *board, int y, int x)
@@ -223,7 +225,9 @@ int	main(void) {
 		if (play(&board))
 			break ;
 	}
+	free_board(board.copy_board, 0);
 	free_board(&board, 1);
+	free(board.copy_board);
 	
 	//getc(stdin);
 	return (0);

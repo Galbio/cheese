@@ -1,5 +1,28 @@
 #include "cheese.h"
 
+void	evaluate_move(board_t *board, piece_t *target, int y, int x, int *valid_move)
+{
+	if (board->copy_board == NULL) {
+		*valid_move = 1;
+		board->possible_moves[y][x] = 1;
+	}
+	else {
+		selector_t	*selec = &board->selector;
+		board->copy_board->selector.origin_x = selec->origin_x;
+		board->copy_board->selector.origin_y = selec->origin_y;
+		board->copy_board->selector.origin_id = selec->origin_id;
+		move_piece(board->copy_board, y, x);
+		if (!king_in_check(board, target->color)) {
+			*valid_move = 1;
+			board->possible_moves[y][x] = 1;
+		}
+		free(board->copy_board->tiles[y][x].pieces);
+		board->copy_board->tiles[y][x] = board->tiles[y][x];
+		board->copy_board->tiles[selec->origin_y][selec->origin_x] =
+			board->tiles[selec->origin_y][selec->origin_x];
+	}
+}
+
 int	move_pawn(board_t *board, piece_t *target, int y, int x)
 {
 	tile_t	*tile;
@@ -15,19 +38,16 @@ int	move_pawn(board_t *board, piece_t *target, int y, int x)
 			continue ;
 		tile = &board->tiles[y + vert_goal][x + i];
 		if (!i && !tile->nb_piece) {
-			board->possible_moves[y + vert_goal][x] = 1;
-			valid_move = 1;
+			evaluate_move(board, target, y + vert_goal, x, &valid_move);
 			if (target->move_counter)
 				continue ;
 			if ((vert_goal == 1 && y == (board->height - 2)) || (vert_goal == -1 && y == 1))
 				continue ;
 			if (!board->tiles[y + vert_goal * 2][x].nb_piece)
-				board->possible_moves[y + vert_goal * 2][x] = 1;
+				evaluate_move(board, target, y + vert_goal * 2, x, &valid_move);
 		}
-		else if (i && (tile->nb_piece && tile->pieces[0].color != target->color)) {
-			board->possible_moves[y + vert_goal][x + i] = 1;
-			valid_move = 1;
-		}
+		else if (i && (tile->nb_piece && tile->pieces[0].color != target->color))
+			evaluate_move(board, target, y + vert_goal, x + i, &valid_move);
 	}
 	return (valid_move);
 }
@@ -36,57 +56,27 @@ int	move_rook(board_t *board, piece_t *target, int y, int x)
 {
 	tile_t	*tile;
 	int		valid_move = 0;
-	int		target_y = y;
-	int		target_x = x;
+	int		y_moves[] = {-1, 1, 0, 0};
+	int		x_moves[] = {0, 0, -1, 1};
+	int		target_y, target_x;
 
-	while (--target_y >= 0) {
-		tile = &board->tiles[target_y][x];
-		if (tile->nb_piece) {
-			if (tile->pieces[0].color != target->color) {
-				board->possible_moves[target_y][x] = 1;
-				valid_move = 1;
+	for (size_t i = 0; i < (sizeof(y_moves) / sizeof(y_moves[0])); i++) {
+		target_y = y;
+		target_x = x;
+		while (1) {
+			target_y += y_moves[i];
+			target_x += x_moves[i];
+			if (target_y < 0 || target_x < 0 ||
+				target_y >= board->height || target_x >= board->width)
+				break ;
+			tile = &board->tiles[target_y][target_x];
+			if (tile->nb_piece) {
+				if (tile->pieces[0].color != target->color)
+					evaluate_move(board, target, target_y, target_x, &valid_move);
+				break ;
 			}
-			break ;
+			evaluate_move(board, target, target_y, target_x, &valid_move);
 		}
-		board->possible_moves[target_y][x] = 1;
-		valid_move = 1;
-	}
-	target_y = y;
-	while (++target_y < board->height) {
-		tile = &board->tiles[target_y][x];
-		if (tile->nb_piece) {
-			if (tile->pieces[0].color != target->color) {
-				board->possible_moves[target_y][x] = 1;
-				valid_move = 1;
-			}
-			break ;
-		}
-		board->possible_moves[target_y][x] = 1;
-		valid_move = 1;
-	}
-	while (++target_x < board->width) {
-		tile = &board->tiles[y][target_x];
-		if (tile->nb_piece) {
-			if (tile->pieces[0].color != target->color) {
-				board->possible_moves[y][target_x] = 1;
-				valid_move = 1;
-			}
-			break ;
-		}
-		board->possible_moves[y][target_x] = 1;
-		valid_move = 1;
-	}
-	target_x = x;
-	while (--target_x >= 0) {
-		if (board->tiles[y][target_x].nb_piece) {
-			if (board->tiles[y][target_x].pieces[0].color != target->color) {
-				board->possible_moves[y][target_x] = 1;
-				valid_move = 1;
-			}
-			break ;
-		}
-		board->possible_moves[y][target_x] = 1;
-		valid_move = 1;
 	}
 	return (valid_move);
 }
@@ -95,54 +85,19 @@ int	move_knight(board_t *board, piece_t *target, int y, int x)
 {
 	tile_t	*tile;
 	int		valid_move = 0;
+	int		y_values[] = {-2, -2, 2, 2, -1, 1, -1, 1};
+	int		x_values[] = {-1, 1, -1, 1, -2, -2, 2, 2};
+	int		target_x, target_y;
 
-	if (y > 1) {
-		tile = &board->tiles[y - 2][x - 1];
-		if (x && (!tile->nb_piece || tile->pieces[0].color != target->color)) {
-			board->possible_moves[y - 2][x - 1] = 1;
-			valid_move = 1;
-		}
-		tile = &board->tiles[y - 2][x + 1];
-		if ((x < (board->width - 1)) && (!tile->nb_piece || tile->pieces[0].color != target->color)) {
-			board->possible_moves[y - 2][x + 1] = 1;
-			valid_move = 1;
-		}
-	}
-	if (y < (board->height - 2)) {
-		tile = &board->tiles[y + 2][x - 1];
-		if (x && (!tile->nb_piece || tile->pieces[0].color != target->color)) {
-			board->possible_moves[y + 2][x - 1] = 1;
-			valid_move = 1;
-		}
-		tile = &board->tiles[y + 2][x + 1];
-		if ((x < (board->width - 1)) && (!tile->nb_piece || tile->pieces[0].color != target->color)) {
-			board->possible_moves[y + 2][x + 1] = 1;
-			valid_move = 1;
-		}
-	}
-	if (x > 1) {
-		tile = &board->tiles[y - 1][x - 2];
-		if (y && (!tile->nb_piece || tile->pieces[0].color != target->color)) {
-			board->possible_moves[y - 1][x - 2] = 1;
-			valid_move = 1;
-		}
-		tile = &board->tiles[y + 1][x - 2];
-		if ((y < (board->height - 1)) && (!tile->nb_piece || tile->pieces[0].color != target->color)) {
-			board->possible_moves[y + 1][x - 2] = 1;
-			valid_move = 1;
-		}
-	}
-	if (x < (board->width - 2)) {
-		tile = &board->tiles[y - 1][x + 2];
-		if (y && (!tile->nb_piece || tile->pieces[0].color != target->color)) {
-			board->possible_moves[y - 1][x + 2] = 1;
-			valid_move = 1;
-		}
-		tile = &board->tiles[y + 1][x + 2];
-		if ((y < (board->height - 1)) && (!tile->nb_piece || tile->pieces[0].color != target->color)) {
-			board->possible_moves[y + 1][x + 2] = 1;
-			valid_move = 1;
-		}
+	for (size_t i = 0; i < (sizeof(y_values) / sizeof(y_values[0])); i++) {
+		target_y = y + y_values[i];
+		target_x = x + x_values[i];
+		if (target_y < 0 || target_x < 0 ||
+			target_y >= board->height || target_x >= board->width)
+			continue ;
+		tile = &board->tiles[target_y][target_x];
+		if (!tile->nb_piece || tile->pieces[0].color != target->color)
+			evaluate_move(board, target, target_y, target_x, &valid_move);
 	}
 	return (valid_move);
 }
@@ -151,62 +106,27 @@ int	move_bishop(board_t *board, piece_t *target, int y, int x)
 {
 	tile_t	*tile;
 	int		valid_move = 0;
-	int		target_y = y;
-	int		target_x = x;
+	int		y_moves[] = {-1, -1, 1, 1};
+	int		x_moves[] = {1, -1, -1, 1};
+	int		target_x, target_y;
 
-	while (--target_y >= 0 && --target_x >= 0) {
-		tile = &board->tiles[target_y][target_x];
-		if (tile->nb_piece) {
-			if (tile->pieces[0].color != target->color) {
-				board->possible_moves[target_y][target_x] = 1;
-				valid_move = 1;
+	for (size_t i = 0; i < (sizeof(y_moves) / sizeof(y_moves[0])); i++) {
+		target_y = y;
+		target_x = x;
+		while (1) {
+			target_y += y_moves[i];
+			target_x += x_moves[i];
+			if (target_y < 0 || target_x < 0 ||
+				target_y >= board->height || target_x >= board->width)
+				break ;
+			tile = &board->tiles[target_y][target_x];
+			if (tile->nb_piece) {
+				if (tile->pieces[0].color != target->color)
+					evaluate_move(board, target, target_y, target_x, &valid_move);
+				break ;
 			}
-			break ;
+			evaluate_move(board, target, target_y, target_x, &valid_move);
 		}
-		board->possible_moves[target_y][target_x] = 1;
-		valid_move = 1;
-	}
-	target_y = y;
-	target_x = x;
-	while (++target_y < board->height && ++target_x < board->width) {
-		tile = &board->tiles[target_y][target_x];
-		if (tile->nb_piece) {
-			if (tile->pieces[0].color != target->color) {
-				board->possible_moves[target_y][target_x] = 1;
-				valid_move = 1;
-			}
-			break ;
-		}
-		board->possible_moves[target_y][target_x] = 1;
-		valid_move = 1;
-	}
-	target_y = y;
-	target_x = x;
-	while (++target_y < board->height && --target_x >= 0) {
-		tile = &board->tiles[target_y][target_x];
-		if (tile->nb_piece) {
-			if (tile->pieces[0].color != target->color) {
-				board->possible_moves[target_y][target_x] = 1;
-				valid_move = 1;
-			}
-			break ;
-		}
-		board->possible_moves[target_y][target_x] = 1;
-		valid_move = 1;
-	}
-	target_y = y;
-	target_x = x;
-	while (--target_y >= 0 && ++target_x < board->width) {
-		tile = &board->tiles[target_y][target_x];
-		if (tile->nb_piece) {
-			if (tile->pieces[0].color != target->color) {
-				board->possible_moves[target_y][target_x] = 1;
-				valid_move = 1;
-			}
-			break ;
-		}
-		board->possible_moves[target_y][target_x] = 1;
-		valid_move = 1;
 	}
 	return (valid_move);
 }
@@ -225,10 +145,8 @@ int	move_king(board_t *board, piece_t *target, int y, int x)
 			if (target_x == x && target_y == y)
 				continue ;
 			tile = &board->tiles[target_y][target_x];
-			if (!tile->nb_piece || (tile->pieces[0].color != target->color)) {
-				board->possible_moves[target_y][target_x] = 1;
-				valid_move = 1;
-			}
+			if (!tile->nb_piece || (tile->pieces[0].color != target->color))
+				evaluate_move(board, target, target_y, target_x, &valid_move);
 		}
 	}
 	return (valid_move);
@@ -239,6 +157,8 @@ int	update_possible_moves(board_t *board, int y, int x)
 	board->selector.origin_x = x;
 	board->selector.origin_y = y;
 	board->selector.origin_id = 0;
+	if (board->copy_board)
+		sync_boards(board->copy_board, board);
 	piece_t	*target = &board->tiles[y][x].pieces[board->selector.origin_id];
 
 	if (target->type == PAWN)
