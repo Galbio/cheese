@@ -66,7 +66,7 @@ void	highlight_board(board_t *board, int y, int x)
 	for (int j = 0; j < board->height; j++) {
 		printf("\r%s%s", CURSOR_RIGHT, CURSOR_RIGHT);
 		for (int i = 0; i < board->width; i++) {
-			printf("%s%s%s", board->possible_moves[j][i] ? WHITE_BG : BLACK_BG,
+			printf("%s%s%s", board->possible_moves[j][i] ? BLUE_BG : BLACK_BG,
 					get_tile_pieces(board, i, j), BLACK_BG);
 			for (int k = 0; k < 3; k++)
 				printf("%s", CURSOR_RIGHT);

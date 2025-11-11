@@ -1,5 +1,35 @@
 #include "cheese.h"
 
+int	move_pawn(board_t *board, piece_t *target, int y, int x)
+{
+	tile_t	*tile;
+	int		valid_move = 0;
+	int		vert_goal = 1;
+
+	if (target->color == BLACK)
+		vert_goal = -1;
+	if ((vert_goal == -1 && y == 0) || (vert_goal == 1 && y == (board->height - 1)))
+		return (0);
+	for (int i = -1; i < 2; i++) {
+		tile = &board->tiles[y + vert_goal][x + i];
+		if (!i && !tile->nb_piece) {
+			board->possible_moves[y + vert_goal][x] = 1;
+			valid_move = 1;
+			if (target->move_counter)
+				continue ;
+			if ((vert_goal == 1 && y == (board->height - 2)) || (vert_goal == -1 && y == 1))
+				continue ;
+			if (!board->tiles[y + vert_goal * 2][x].nb_piece)
+				board->possible_moves[y + vert_goal * 2][x] = 1;
+		}
+		else if (i && (tile->nb_piece && tile->pieces[0].color != target->color)) {
+			board->possible_moves[y + vert_goal][x + i] = 1;
+			valid_move = 1;
+		}
+	}
+	return (valid_move);
+}
+
 int	move_rook(board_t *board, piece_t *target, int y, int x)
 {
 	tile_t	*tile;
@@ -210,7 +240,9 @@ int	update_possible_moves(board_t *board, int y, int x)
 	board->selector.origin_id = 0;
 	piece_t	*target = &board->tiles[y][x].pieces[board->selector.origin_id];
 
-	if (target->type == ROOK)
+	if (target->type == PAWN)
+		return (move_pawn(board, target, y, x));
+	else if (target->type == ROOK)
 		return (move_rook(board, target, y, x));
 	else if (target->type == KNIGHT)
 		return (move_knight(board, target, y, x));

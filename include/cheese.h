@@ -15,8 +15,9 @@
 #define CURSOR_LEFT "\033[D"
 #define HIDE_CURSOR "\e[?25l"
 #define SHOW_CURSOR "\e[?25h"
-#define BLACK_BG "\033[40m"
-#define WHITE_BG "\033[47m"
+#define BLACK_BG	"\033[40m"
+#define WHITE_BG	"\033[47m"
+#define BLUE_BG		"\033[43m"
 
 #define WHITE	0
 #define BLACK	1
