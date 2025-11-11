@@ -6,7 +6,7 @@
 /*   By: gakarbou <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/11 18:23:34 by gakarbou          #+#    #+#             */
-/*   Updated: 2025/11/11 19:31:19 by gakarbou         ###   ########.fr       */
+/*   Updated: 2025/11/11 19:36:24 by gakarbou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,16 +16,16 @@ board_t	clone_board(board_t *board)
 {
 	board_t	dest = *board;
 
-	dest.occupied_map = NULL;
+	dest.occupied_map = malloc((dest.height + 1) * sizeof(char *));
 	dest.possible_moves = malloc((dest.height + 1) * sizeof(char *));
-	if (!dest.possible_moves)
+	if (!dest.occupied_map || !dest.possible_moves)
 		exit(1);
 	dest.possible_moves[dest.height] = 0;
 	for (int i = 0; i < dest.height; i++) {
+		dest.occupied_map[i] = malloc((dest.width + 1) * sizeof(char));
 		dest.possible_moves[i] = malloc((dest.width + 1) * sizeof(char));
-		if (!dest.possible_moves[i])
+		if (!dest.occupied_map[i] || !dest.possible_moves[i])
 			exit(1);
-		memcpy(dest.possible_moves[i], board->possible_moves[i], dest.width);
 	}
 	dest.tiles = malloc((dest.height + 1) * sizeof(tile_t *));
 	if (!dest.tiles)
@@ -34,8 +34,6 @@ board_t	clone_board(board_t *board)
 		dest.tiles[j] = malloc(dest.width * sizeof(tile_t));
 		if (!dest.tiles[j])
 			exit(1);
-		for (int i = 0; i < dest.width; i++)
-			dest.tiles[j][i] = board->tiles[j][i];
 	}
 	dest.tiles[dest.height] = NULL;
 	return (dest);
