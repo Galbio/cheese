@@ -1,75 +1,69 @@
 #include "cheese.h"
-#include <signal.h>
-#include <sys/wait.h>
-#include <stdlib.h>
-#include <unistd.h>
 
-static void close_pipes(int p1[2], int p2[2]) {
-	close(p1[0]);
-	close(p1[1]);
-	close(p2[0]);
-	close(p2[1]);
+static uint32_t H[8] = {
+	0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,
+	0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19
+};
+
+static uint32_t K[] = {
+	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 
+	0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+	0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
+	0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+	0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
+	0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+	0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 
+	0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967, 
+	0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
+	0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+	0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
+	0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+	0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
+	0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3, 
+	0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
+	0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+};
+
+static inline uint8_t get_byte(const uint8_t *str, size_t pos, size_t len) {
+	if (pos < len)
+		return str[pos];
+	if (pos == len)
+		return 0b10000000;
+
+	size_t null_start = len + 1;
+	size_t null_end = null_start;
+	while (null_end % (512 / 8) != (448 / 8))
+		null_end++;
+	if (pos < null_end)
+		return 0;
+	if (pos >= null_end)
+		pos -= null_end;
+
+	uint64_t len_u64 = 8 * (uint64_t)len;
+
+	uint8_t len_arr[8];
+	memcpy(len_arr, &len_u64, 8);
+	if (pos > 7)
+		return 0;
+	#ifdef BIG_ENDIAN
+		return len_arr[pos];
+	#else
+		return len_arr[7 - pos];
+	#endif
+}
+
+static void get_chunk(const uint8_t *str, size_t chunk_num, size_t len, uint8_t chunk[64]) {
+	size_t chunk_pos = chunk_num * 64;
+	for (int i = 0; i < 64; i++)
+		chunk[i] = get_byte(str, chunk_pos++, len); 
 }
 
 char *sha256(char *str) {
-	int pipe_read[2] = {-1, -1};
-	int pipe_write[2] = {-1, -1};
+	char *res = malloc(256 + 1);
+	if (!res)
+		return NULL;
 
-	if (pipe(pipe_read) < 0)
-		return NULL;
-	if (pipe(pipe_write) < 0) {
-		close_pipes(pipe_read, pipe_write);
-		return NULL;
-	}
+	ress[256] = '\0';
 
-	int pid = fork();
-	if (pid < 0) {
-		close_pipes(pipe_read, pipe_write);
-		return NULL;
-	}
-
-	if (pid == 0) {
-		if (dup2(pipe_read[1], 1) < 0 || 0 > dup2(pipe_write[0], 0)) {
-			close_pipes(pipe_read, pipe_write);
-			exit(1);
-		}
-		close_pipes(pipe_read, pipe_write);
-		execvp("shasum", (char *[]){"shasum", "-a", "256", NULL});
-		exit(1);
-	}
-	write(pipe_write[1], str, strlen(str));
-	close(pipe_write[0]);
-	close(pipe_write[1]);
-	pipe_write[0] = -1;
-	pipe_write[1] = -1;
-	int status = 0;
-	if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-		close_pipes(pipe_read, pipe_write);
-		kill(pid, 9);
-		return NULL;
-	}
-	char *res = malloc(64 + 1);
-	int end = 0;
-	while (1) {
-		if (end >= 64)
-			break;
-		int ret = read(pipe_read[0], &res[end], 64 - end);
-		printf("%.*s\n", end, res);
-		if (ret < 0) {
-			free(res);
-			res = NULL;
-			break;
-		}
-		if (ret == 0)
-			break;
-		end += ret;
-	}
-	if (end < 64) {
-		free(res);
-		res = NULL;
-	}
-	else 
-		res[64] = '\0';
-	close_pipes(pipe_read, pipe_write);
 	return res;
 }
