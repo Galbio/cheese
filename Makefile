@@ -8,7 +8,7 @@ LD = gcc
 
 LIBS_INCLUDE = -Ioeuf/
 LIBS = liboeuf.a
-CFLAGS = -Wall -Wextra -Iinclude $(LIBS_INCLUDE) -g
+CFLAGS = -Wall -Wextra -Iinclude $(LIBS_INCLUDE) -g # -DBIG_ENDIAN # for big endian systems
 LDFLAGS =
 
 NAME = cheese
