@@ -31,33 +31,46 @@ enum pieces {
 };
 
 typedef struct {
-	int		type;
-	int		color;
-	char	*character;
+	int			origin_x;
+	int			origin_y;
+	int			origin_id;
+	int			target_x;
+	int			target_y;
+}	selector_t;
+
+typedef struct {
+	int			type;
+	int			color;
+	int			kill_count;
+	int			move_counter;
+	char		*character;
 }	piece_t;
 
 typedef struct {
-	int		color;
-	int		nb_piece;
-	piece_t	*pieces;
+	int			color;
+	int			nb_piece;
+	piece_t		*pieces;
 }	tile_t;
 
 typedef struct {
-	int		width;
-	int		height;
-	int		white_pieces;
-	int		black_pieces;
-	tile_t	**tiles;
-	char	**occupied_map;
-	char	**possible_moves;
+	int			width;
+	int			height;
+	int			white_pieces;
+	int			black_pieces;
+	tile_t		**tiles;
+	char		**occupied_map;
+	char		**possible_moves;
+	selector_t	selector;
 }	board_t;
 
 void	init_board(char *filepath, board_t *board);
+int		update_possible_moves(board_t *board, int y, int x);
 
 //utils
 char	*get_tile_pieces(board_t *board, int x, int y);
 char	*strjoin(char *s1, char *s2, int free_s1);
 void	get_cursor_position(int *x, int *y);
+void	reset_possible_moves(board_t *board);
 int		max(int a, int b);
 int		min(int a, int b);
 

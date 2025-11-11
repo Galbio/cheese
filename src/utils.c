@@ -64,3 +64,11 @@ char	*get_tile_pieces(board_t *board, int x, int y)
 		return (board->tiles[y][x].pieces[0].character);
 	return (" ");
 }
+
+void	reset_possible_moves(board_t *board)
+{
+	for (int j = 0; j < board->height; j++)
+		for (int i = 0; i < board->width; i++)
+			board->possible_moves[j][i] = 0;
+}
+

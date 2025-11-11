@@ -12,27 +12,46 @@ void on_sigint(int _) {
 	exit(1);
 }
 
-void	reset_possible_moves(board_t *board)
+void	remove_piece(tile_t *target, int id)
 {
-	for (int j = 0; j < board->height; j++)
-		for (int i = 0; i < board->width; i++)
-			board->possible_moves[j][i] = 0;
+	piece_t	piece = target->pieces[id];
+	for (int i = (id + 1); i < target->nb_piece; i++)
+		target->pieces[i - 1] = target->pieces[i];
+	if (!--target->nb_piece) {
+		free(target->pieces);
+		target->pieces = NULL;
+	}
+	free(piece.character);
 }
 
-void	update_possible_moves(board_t *board, int y, int x)
+void	move_piece(board_t *board, int y, int x)
 {
-	reset_possible_moves(board);
-	if (y > 1) {
-		board->possible_moves[y - 1][x] = 1;
-		board->possible_moves[y - 2][x] = 1;
+	board->selector.target_y = y;
+	board->selector.target_x = x;
+	tile_t	*origin_tile = &board->tiles[board->selector.origin_y][board->selector.origin_x];
+	tile_t	*target_tile = &board->tiles[board->selector.target_y][board->selector.target_x];
+	piece_t selected_piece = origin_tile->pieces[board->selector.origin_id];
+
+	for (int i = (board->selector.origin_id + 1); i < origin_tile->nb_piece; i++)
+		origin_tile->pieces[i - 1] = origin_tile->pieces[i];
+	if (!--origin_tile->nb_piece) {
+		free(origin_tile->pieces);
+		origin_tile->pieces = NULL;
 	}
+	if (target_tile->nb_piece) {
+		remove_piece(target_tile, 0);
+		selected_piece.kill_count++;
+	}
+	selected_piece.move_counter++;
+	target_tile->pieces = realloc(target_tile->pieces,
+			sizeof(piece_t) * (target_tile->nb_piece + 1));
+	if (!target_tile->pieces)
+		exit(1);
+	target_tile->pieces[target_tile->nb_piece++] = selected_piece;
 }
 
 void	highlight_board(board_t *board, int y, int x)
 {
-	(void)x;
-	(void)y;
-
 	int cursor_y;
 	int	cursor_x;
 
@@ -174,11 +193,13 @@ int	play(board_t *board)
 				break ;
 			case 10:
 				if (!confirm && board->occupied_map[y][x]) {
-					update_possible_moves(board, y, x);
-					highlight_board(board, y, x);
-					confirm = 1;
+					if (update_possible_moves(board, y, x)) {
+						highlight_board(board, y, x);
+						confirm = 1;
+					}
 				}
 				else if (confirm && board->possible_moves[y][x]) {
+					move_piece(board, y, x);
 					confirm = 2;
 				}
 				else if (confirm && board->occupied_map[y][x]) {
