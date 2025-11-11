@@ -237,5 +237,6 @@ int	main(void) {
 	}
 	free_board(&board);
 	
-	getc(stdin);
+	//getc(stdin);
+	return (0);
 }
