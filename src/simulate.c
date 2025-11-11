@@ -44,7 +44,6 @@ void	sync_boards(board_t *cpy, board_t *src)
 
 int	king_in_check(board_t *board_base, int color)
 {
-	static aled = 1;
 	board_t	*board;
 	int		check = 0;
 	tile_t	*tile;
@@ -60,8 +59,6 @@ int	king_in_check(board_t *board_base, int color)
 	}
 	for (int j = 0; j < board->height; j++) {
 		for (int i = 0; i < board->width; i++) {
-			if (!aled)
-				printf("%d", board->possible_moves[j][i]);
 			tile = &board->tiles[j][i];
 			if (!board->possible_moves[j][i] || !tile->nb_piece)
 				continue ;
