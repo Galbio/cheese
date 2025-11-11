@@ -71,4 +71,3 @@ void	highlight_board(board_t *board, int y, int x)
 	printf("\033[%d;%dH\e[?25h", cursor_y, cursor_x);
 	fflush(stdout);
 }
-

@@ -89,4 +89,3 @@ void	free_board(board_t *board, int free_char)
 	free(board->possible_moves);
 	free(board->tiles);
 }
-
