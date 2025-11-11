@@ -85,6 +85,7 @@ void	get_cursor_position(int *x, int *y);
 void	reset_possible_moves(board_t *board);
 int		max(int a, int b);
 int		min(int a, int b);
+char	*sha256(char *str);
 
 //buffers
 typedef struct {
@@ -92,6 +93,8 @@ typedef struct {
 	size_t len;
 	size_t alloc_len;
 } buffer_t;
+
+
 
 int		buffer_append(buffer_t *buffer, void *data, size_t len);
 void	buffer_remove(buffer_t *buffer, size_t start, size_t len);
