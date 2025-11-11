@@ -11,6 +11,8 @@ int	move_pawn(board_t *board, piece_t *target, int y, int x)
 	if ((vert_goal == -1 && y == 0) || (vert_goal == 1 && y == (board->height - 1)))
 		return (0);
 	for (int i = -1; i < 2; i++) {
+		if ((x + i) < 0 || (x + i) >= board->width)
+			continue ;
 		tile = &board->tiles[y + vert_goal][x + i];
 		if (!i && !tile->nb_piece) {
 			board->possible_moves[y + vert_goal][x] = 1;
@@ -234,7 +236,6 @@ int	move_king(board_t *board, piece_t *target, int y, int x)
 
 int	update_possible_moves(board_t *board, int y, int x)
 {
-	reset_possible_moves(board);
 	board->selector.origin_x = x;
 	board->selector.origin_y = y;
 	board->selector.origin_id = 0;

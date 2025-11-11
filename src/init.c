@@ -12,27 +12,27 @@ piece_t	create_piece(char piece)
 	switch (piece) {
 		case 'P':
 			dest.type = PAWN;
-			dest.character = strdup("♙");
+			strcpy(dest.character, "♙");
 			break ;
 		case 'R':
 			dest.type = ROOK;
-			dest.character = strdup("♖");
+			strcpy(dest.character, "♖");
 			break ;
 		case 'N':
 			dest.type = KNIGHT;
-			dest.character = strdup("♘");
+			strcpy(dest.character, "♘");
 			break ;
 		case 'B':
 			dest.type = BISHOP;
-			dest.character = strdup("♗");
+			strcpy(dest.character, "♗");
 			break ;
 		case 'Q':
 			dest.type = QUEEN;
-			dest.character = strdup("♕");
+			strcpy(dest.character, "♕");
 			break ;
 		case 'K':
 			dest.type = KING;
-			dest.character = strdup("♔");
+			strcpy(dest.character, "♔");
 			break ;
 	};
 	if (dest.color == BLACK)

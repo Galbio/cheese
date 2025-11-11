@@ -44,7 +44,7 @@ typedef struct {
 	int			color;
 	int			kill_count;
 	int			move_counter;
-	char		*character;
+	char		character[5];
 }	piece_t;
 
 typedef struct {
@@ -58,14 +58,21 @@ typedef struct {
 	int			height;
 	int			white_pieces;
 	int			black_pieces;
+	int			white_checked;
+	int			black_checked;
 	tile_t		**tiles;
 	char		**occupied_map;
 	char		**possible_moves;
 	selector_t	selector;
 }	board_t;
 
+void	free_board(board_t *board, int free_char);
 void	init_board(char *filepath, board_t *board);
 int		update_possible_moves(board_t *board, int y, int x);
+
+//simulations
+board_t	clone_board(board_t *board);
+int		king_in_check(board_t *board, int color);
 
 //utils
 char	*get_tile_pieces(board_t *board, int x, int y);

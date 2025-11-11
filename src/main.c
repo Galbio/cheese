@@ -14,14 +14,12 @@ void on_sigint(int _) {
 
 void	remove_piece(tile_t *target, int id)
 {
-	piece_t	piece = target->pieces[id];
 	for (int i = (id + 1); i < target->nb_piece; i++)
 		target->pieces[i - 1] = target->pieces[i];
 	if (!--target->nb_piece) {
 		free(target->pieces);
 		target->pieces = NULL;
 	}
-	free(piece.character);
 }
 
 void	move_piece(board_t *board, int y, int x)
@@ -48,6 +46,12 @@ void	move_piece(board_t *board, int y, int x)
 	if (!target_tile->pieces)
 		exit(1);
 	target_tile->pieces[target_tile->nb_piece++] = selected_piece;
+	reset_possible_moves(board);
+	if (king_in_check(board, selected_piece.color)) {
+		write(1, "A", 1);
+		while (1)
+			;
+	}
 }
 
 void	highlight_board(board_t *board, int y, int x)
@@ -127,24 +131,6 @@ void	print_board(board_t	*board)
 	fflush(stdout);
 }
 
-void	free_board(board_t *board)
-{
-	for (int j = 0; j < board->height; j++) {
-		free(board->occupied_map[j]);
-		free(board->possible_moves[j]);
-		for (int i = 0; i < board->width; i++) {
-			for (int k = 0; k < board->tiles[j][i].nb_piece; k++)
-				free(board->tiles[j][i].pieces[k].character);
-			if (board->tiles[j][i].nb_piece)
-				free(board->tiles[j][i].pieces);
-		}
-		free(board->tiles[j]);
-	}
-	free(board->occupied_map);
-	free(board->possible_moves);
-	free(board->tiles);
-}
-
 int	play(board_t *board)
 {
 	static int	x = 0;
@@ -193,6 +179,7 @@ int	play(board_t *board)
 				break ;
 			case 10:
 				if (!confirm && board->occupied_map[y][x]) {
+					reset_possible_moves(board);
 					if (update_possible_moves(board, y, x)) {
 						highlight_board(board, y, x);
 						confirm = 1;
@@ -203,6 +190,7 @@ int	play(board_t *board)
 					confirm = 2;
 				}
 				else if (confirm && board->occupied_map[y][x]) {
+					reset_possible_moves(board);
 					update_possible_moves(board, y, x);
 					highlight_board(board, y, x);
 				}
@@ -235,7 +223,7 @@ int	main(void) {
 		if (play(&board))
 			break ;
 	}
-	free_board(&board);
+	free_board(&board, 1);
 	
 	//getc(stdin);
 	return (0);
