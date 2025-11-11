@@ -1,1 +1,4 @@
+create account:
+	send:
+		OPC_MKACC
 

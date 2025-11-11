@@ -221,22 +221,24 @@ int	play(board_t *board)
 	}
 }
 
-int	main(void) {
-	board_t		board = {0};
-
-	printf("\e[?1049h");
-	fflush(stdout);
-	atexit(lexit);
-	signal(SIGINT, on_sigint);
-	srv_start(0, NULL);
-	init_board("base", &board);
-	while (1) {
-		write(1, "\033[2J\033[H", 7);
-		if (play(&board))
-			break ;
-	}
-	free_board(&board);
-	
-	//getc(stdin);
+int	main(int argc, char **argv) {
+	(void)argc;
+	printf("sha256 %s\n", sha256(argv[1]));
+//	board_t		board = {0};
+//
+//	printf("\e[?1049h");
+//	fflush(stdout);
+//	atexit(lexit);
+//	signal(SIGINT, on_sigint);
+//	srv_start(0, NULL);
+//	init_board("base", &board);
+//	while (1) {
+//		write(1, "\033[2J\033[H", 7);
+//		if (play(&board))
+//			break ;
+//	}
+//	free_board(&board);
+//	
+//	//getc(stdin);
 	return (0);
 }
